@@ -1,0 +1,14 @@
+function clearBatch() {  
+
+//Clear the Process and Date columns in Batch Inbound to Report sheet daily before processing
+ var fileBatch = SpreadsheetApp.openById('1ZiuIXIGLlu5kpB35uwaFZSbCio7aQuGvr4m1Rfu7J_0'); //Separate spreadsheet book
+  //var desFile = fileDes.getSheetByName('Data Studio - Training Report -'); //Sheet tab with destination  data
+  var sheetBatch = fileBatch.getSheets()[0];
+  var clrRange = sheetBatch.getRange("G2:H11")
+  
+clrRange.clearContent();
+
+Logger.log('Clear the contents in Process annd Date Time columns in fBatch Inbound to Report sheet');
+
+
+}
