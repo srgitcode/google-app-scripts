@@ -1,0 +1,54 @@
+function mv_file_to_inbound() {
+
+
+// This script convert  Excel in My drive to google sheet and move to Shared drive Inbound folder
+
+  var today     = new Date();
+  var oneDayAgo = new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000);
+  var startTime = oneDayAgo.toISOString();
+
+  var end, start, runTime;
+  start = new Date(); // Start timer
+
+  var srcFolder = DriveApp.getFolderById("1qMyXwJ_zyBoamOy4IRyULKhHoR3OEoLF").searchFiles('modifiedDate > "' + startTime + '"');
+  //let files = srcFolder.getFilesByName("Data_Studio_-_SCORM_2004_Assessment_-_Trapac_20210906_05_24_40_PM.xlsx");
+
+  //var folders = DriveApp.getFolderById("1sImxk6GfDRFrEtFjRjkwM8zqD5A8FFos");
+  //var folder = folders.next();
+  //var contents = folder.getFiles();
+
+  
+  Logger.log('Files greater than Start Time : "' + startTime + '"');
+
+  //var fileSrc = srcFolder.searchFiles('modifiedDate > "' + startTime + '"');
+    //
+   //var fileSrcget = fileSrc.getFiles();
+   //Logger.log('fileSrc : "' + fileSrc + '"');
+    //Logger.log('fileSrc has Next : "' + filesinSrc.hasNext() + '"');
+
+  var files = srcFolder;
+
+ //var files = srcFolder.getFiles();
+ //
+
+  while (files.hasNext()) {
+    let excelFile = null;
+   excelFile = files.next();
+    Logger.log('File Names : "' + excelFile.getName() + '"');
+  let blob = excelFile.getBlob();
+  let config = {
+    title: excelFile.getName(),
+    //Insert Google sheets in Inbound folder
+    parents: [{id: "1sImxk6GfDRFrEtFjRjkwM8zqD5A8FFos"}],
+    mimeType: MimeType.GOOGLE_SHEETS
+  };
+  newFile = Drive.Files.insert(config, blob , { supportsAllDrives: true });
+  // drive file insert will throw error if files other than xlsx are present in my drive CSOD delivered report folder 
+  }
+
+  end = new Date();
+  runTime = (end.getTime() - start.getTime())/1000;
+
+  Logger.log('Excel to Sheet inbound folder COMPLETED  - runtime : "' + runTime + '"');
+  
+}
