@@ -1,0 +1,59 @@
+
+function DeleteOldFiles() {
+
+ // '1qMyXwJ_zyBoamOy4IRyULKhHoR3OEoLF' -- My Drive -> CSOD Delivered Reports -> XL File Attachments extracted from mail
+ // '1sImxk6GfDRFrEtFjRjkwM8zqD5A8FFos' -- Shared Drive -> Navis Product training -> Google Data Studio -> Inbound folder ->  XL to Google sheets
+  var Folders = new Array(
+    '1qMyXwJ_zyBoamOy4IRyULKhHoR3OEoLF', //My Drive CSOD Delivered Report
+    '1sImxk6GfDRFrEtFjRjkwM8zqD5A8FFos' //Inbound
+  );
+  var Files;
+  
+ Logger.clear();
+
+ Logger.log('============RPT1 - DeleteOldFiles Started===============');
+ var end, start, runTime;
+  start = new Date(); // Start timer
+  
+  var arrayLength = Folders.length;
+
+  for (var i = 0; i < arrayLength; i++) {
+    Folder = DriveApp.getFolderById(Folders[i])
+    Files = Folder.getFiles();
+    
+    while (Files.hasNext()) {
+      var File = Files.next();
+      
+      end = new Date();
+      runTime = (end.getTime() - start.getTime())/1000;
+
+      // Files older than 90 days --> new Date() - File.getDateCreated() > 90 * 24 * 60 * 60 * 1000
+      // Files older than one day --> new Date() - File.getDateCreated() > 1 * 24 * 60 * 60 * 1000
+      // Files older than 12 hours --> will e moved to trash by this script
+      if (new Date() - File.getDateCreated() > 1 * 12 * 60 * 60 * 1000) {
+        File.setTrashed(true); // Places the file int the Trash folder
+        //Drive.Files.remove(File.getId()); // Permanently deletes the file
+        Logger.log('File: ' + ' "' + Folder + "/" + File.getName() + '" moved to Trash.. runtime : "'+ runTime + ' " ');
+      }
+    }
+  }
+  
+
+      
+
+  Logger.log('============RPT1 - DeleteOldFiles Ended===============');
+  /** 
+  var recipient = 'your_email@address.com';
+  var subject = 'Homeboy folder has been cleaned up'
+  var body = Logger.getLog();
+  
+  if(body != '') {
+    MailApp.sendEmail(recipient, subject, body);
+    Logger.log('⚒ eMail sent.');
+  }
+  
+  if(body == '') {
+    Logger.log('⚒ No files were removed today.');
+  }
+  */
+}
