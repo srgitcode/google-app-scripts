@@ -1,0 +1,122 @@
+function importDSRPT() {
+
+ // Get the spreadsheet time zone
+
+  //var timezone = ss.getSpreadsheetTimeZone();
+
+ 
+Logger.log("=========Import Report Started==========");
+
+ // Find files modified in the last 24 hours
+  var formattedDate = Utilities.formatDate(new Date(), "IST", "yyyy-MM-dd'T'HH:mm:ss'Z'");
+  var today     = new Date();
+  var oneDayAgo = new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000);
+  var startTime = oneDayAgo.toISOString();
+
+  var end, start, runTime;
+  start = new Date(); // Start timer
+
+  // Get all data from the spreadsheet - Batch Inbound to Report and identify the headers
+ 
+  //https://docs.google.com/spreadsheets/d/1ZiuIXIGLlu5kpB35uwaFZSbCio7aQuGvr4m1Rfu7J_0/edit#gid=0
+
+  var fileBatch = SpreadsheetApp.openById('1ZiuIXIGLlu5kpB35uwaFZSbCio7aQuGvr4m1Rfu7J_0'); //Separate spreadsheet book
+  //var desFile = fileDes.getSheetByName('Data Studio - Training Report -'); //Sheet tab with destination  data
+  var sheetBatch = fileBatch.getSheets()[0];
+  var values = sheetBatch.getDataRange().getValues();
+  var headers = values[0];
+							
+  var inboundFolderIndex = headers.indexOf("Inbound Folder");
+  var inboundFilenameIndex = headers.indexOf("Inbound File Name");
+  var headerRowIndex = headers.indexOf("Header Row");
+  var reportFileidIndex = headers.indexOf("Report File ID");
+  var reportFolderIndex = headers.indexOf("Report Folder");
+  var reportFilenameIndex = headers.indexOf("Report File Name");
+  var processIndex = headers.indexOf("Process");
+  var dateIndex = headers.indexOf("Date Time");
+  
+  // Iterate through each row to capture individual details
+  for (var i = 1; i < values.length; i++) {
+    var rowData = values[i];
+    var inboundFolder = rowData[inboundFolderIndex];
+    var inboundFilename = rowData[inboundFilenameIndex];
+    var headerRow = rowData[headerRowIndex];
+    var reportFileid = rowData[reportFileidIndex];
+    var reportFolder = rowData[reportFolderIndex];
+    var reportFilename = rowData[reportFilenameIndex];
+    var process = rowData[processIndex];
+    var date = rowData[dateIndex];
+
+
+ // Import the inbound sheet into report file if not yet processed - Process column is blank
+   var chkProcess = sheetBatch.getRange(i + 1, processIndex + 1);
+   if (chkProcess.isBlank())
+   {
+
+  //var srcFolder = DriveApp.getFolderById("1sImxk6GfDRFrEtFjRjkwM8zqD5A8FFos");
+  var srcFolder = DriveApp.getFolderById(inboundFolder);
+  //let files = srcFolder.getFilesByName("Data_Studio_-_SCORM_2004_Assessment_-_Trapac_20210906_05_24_40_PM.xlsx");
+
+  //var folders = DriveApp.getFolderById("1sImxk6GfDRFrEtFjRjkwM8zqD5A8FFos");
+  //var folder = folders.next();
+  //var contents = folder.getFiles();
+
+  Logger.log('Source Folder : "' + srcFolder + '"');
+  
+  Logger.log('Files greater than modified Time : "' + startTime + '"');
+
+  // var fileSrc = srcFolder.searchFiles('title contains "Data_Studio_-_SCORM_2004_Assessment_-_Trapac" and mimeType = "' + MimeType.GOOGLE_SHEETS + '" and (modifiedDate > "' + startTime + '")');
+  var fileSrc = srcFolder.searchFiles('title contains " ' + inboundFilename + ' " and mimeType = "' + MimeType.GOOGLE_SHEETS + '" and (modifiedDate > "' + startTime + '")');
+    //
+   //var fileSrcget = fileSrc.getFiles();
+   // Logger.log('fileSrc : "' + fileSrcget + '"');
+    //Logger.log('fileSrc has Next : "' + filesinSrc.hasNext() + '"');
+
+  if (fileSrc.hasNext()) {
+  var spreadsheet1 = SpreadsheetApp.open(fileSrc.next());
+  var srcFile = spreadsheet1.getSheets()[0];
+  Logger.log('Source File Sheet Name -: "' + srcFile.getName() + '"');
+    }
+    else
+    {
+      Logger.log("Source File not available");
+     // return null ; -- it does not iterate to the next rows in atch Inbound sheet
+     continue ; // move to next for loop iteration
+    }
+
+  /**  Delete first few rows from source file if first row is empty */
+   var chkEmptyrange = srcFile.getRange("A1:H1");
+    if(chkEmptyrange.isBlank()){
+   //srcFile.deleteRows(1, 7);
+   srcFile.deleteRows(1, headerRow);
+    Logger.log('Source File deleted rows - "' + headerRow +'" to set header : : "' + srcFile.getName() + '"');
+    }
+
+ // var fileDes = SpreadsheetApp.openById('1IknowGs8IBnOTsEmeewqxElK0-7WB3RW1YbYYLZZPbI'); //Separate spreadsheet book
+  var fileDes = SpreadsheetApp.openById(reportFileid);
+  //var desFile = fileDes.getSheetByName('Data Studio - Training Report -'); //Sheet tab with destination  data
+  var desFile = fileDes.getSheets()[0];
+  // desFile.clear(); Clears the sheet of content and formatting information
+  //desFile.clearContent() //Clears the sheet of content 
+ 
+
+  let srcData = srcFile.getDataRange();
+  //let srcData = srcFile.getRange("A8:A");
+
+  let range = desFile.getRange(1,1,srcData.getNumRows(), srcData.getNumColumns());
+  range.setValues(srcData.getValues());
+
+ // Update the spreadsheet with the new Slide Id and status
+    sheetBatch.getRange(i + 1, processIndex + 1).setValue("Completed");
+    sheetBatch.getRange(i + 1, dateIndex + 1).setValue(formattedDate);
+    SpreadsheetApp.flush();
+    }
+ 
+   }
+ 
+  end = new Date();
+ runTime = (end.getTime() - start.getTime())/1000;
+    Logger.log('=========Import Report Completed : runtime "' + runTime + '"======================');
+
+    
+}
